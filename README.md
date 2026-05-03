@@ -2,8 +2,7 @@
 
 A clean macOS desktop app to download YouTube videos. A minimal wrapper around yt-dlp with a native Swift UI — no Python, no Homebrew, no setup.
 
-**[→ Download latest release](https://github.com/lucyfang/yt-downloader/releases/latest)**  
-**[→ Landing page](https://ytdownloader-minimal.vercel.app)**
+Landing page: https://ytdownloader-minimal.vercel.app/
 
 ## Features
 
