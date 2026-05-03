@@ -4,6 +4,8 @@ A clean macOS desktop app to download YouTube videos. A minimal wrapper around y
 
 Landing page: https://ytdownloader-minimal.vercel.app/
 
+![YT Downloader screenshot](assets/screenshot.png)
+
 ## Features
 
 - Save as MP4 (H.264 or H.265) or MP3 audio
