@@ -1,0 +1,18 @@
+# Compiled binaries
+app/YTDownloader
+app/YTDownloader_arm64
+app/YTDownloader_x86_64
+
+# Bundled third-party binaries (too large for git)
+app/bin/yt-dlp
+app/bin/ffmpeg
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# Vercel
+web/.vercel
+
+# Preview files
+web/index-tl-design.html
