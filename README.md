@@ -8,7 +8,6 @@ Landing page: https://ytdownloader-minimal.vercel.app/
 
 - Save as MP4 (H.264 or H.265) or MP3 audio
 - yt-dlp and ffmpeg bundled — nothing to install
-- Picks up where you left off — remembers your last save folder
 - macOS 13+
 
 ## Project structure
