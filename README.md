@@ -14,13 +14,13 @@ Landing page: https://ytdownloader-minimal.vercel.app/
 
 ## Install
 
-### Option 1 — Download the DMG (macOS 13–15)
+### Option 1 — Download the DMG
 
 [Download latest release](https://github.com/lucyfang/yt-downloader/releases/latest)
 
 On first launch, macOS will block the app. Go to **System Settings → Privacy & Security** and click **Open Anyway**.
 
-### Option 2 — Build from source (macOS 16+)
+### Option 2 — Build from source
 
 Paste this into Terminal:
 
