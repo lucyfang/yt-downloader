@@ -393,7 +393,7 @@ footer p { font-size: 13px; color: #45423F; }
   <!-- Install method tabs -->
   <div class="install-tabs">
     <button class="install-tab active" onclick="switchTab('dmg', this)">Download</button>
-    <button class="install-tab" onclick="switchTab('source', this)">Build</button>
+    <button class="install-tab" onclick="switchTab('source', this)">Build from source</button>
   </div>
 
   <!-- Tab 1: DMG -->
@@ -413,20 +413,26 @@ footer p { font-size: 13px; color: #45423F; }
     <div class="step">
       <div class="step-num">2</div>
       <div class="step-body">
-        <h4>Open the DMG</h4>
-        <p>Double-click the downloaded file to open the installer window.</p>
+        <h4>Install</h4>
+        <p>Double-click the downloaded file, then drag <strong>YTDownloader</strong> into your <strong>Applications</strong> folder.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div class="step-body">
-        <h4>Ready to go</h4>
-        <p>Open YT Downloader directly from the installer window. macOS may ask you to confirm on first launch — click <strong>Open</strong>. If macOS blocks the app, go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>.</p>
-        <p style="margin-top:10px;">To open the app from Applications instead, run this once in Terminal:</p>
-        <div class="terminal-block" style="margin-top:6px;">
+        <h4>Allow the app to run</h4>
+        <p>Because the app isn't notarized, macOS will block it on first launch. Run this once in Terminal:</p>
+        <div class="terminal-block" style="margin-top:8px;">
           <span class="terminal-cmd" id="fix-cmd">xattr -cr /Applications/YTDownloader.app &amp;&amp; codesign --force --deep --sign - /Applications/YTDownloader.app</span>
           <button class="copy-btn" onclick="copyFixCmd()">Copy</button>
         </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Ready to go</h4>
+        <p>Open YT Downloader from Applications. Paste any YouTube URL, pick a format, hit Download.</p>
       </div>
     </div>
   </div>
