@@ -1,6 +1,8 @@
 import Cocoa
 import WebKit
 
+let appVersion = "1.2"
+
 // MARK: - Preferences
 
 let defaultFolder = NSHomeDirectory() + "/Downloads"
