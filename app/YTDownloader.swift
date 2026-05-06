@@ -145,6 +145,7 @@ body {
   <div class="header-row">
     <img src="icon.png" style="width:24px;height:24px;border-radius:5px;flex-shrink:0;" alt="">
     <span class="header-title">YT Downloader</span>
+    <span class="header-sub">v\#(appVersion)</span>
   </div>
   <div class="header-gradient"></div>
 </div>
