@@ -421,7 +421,12 @@ footer p { font-size: 13px; color: #45423F; }
       <div class="step-num">3</div>
       <div class="step-body">
         <h4>Ready to go</h4>
-        <p>Open YT Downloader directly from the installer window. macOS may ask you to confirm on first launch — click <strong>Open</strong>. Note: the app must be launched from the DMG window, not from Applications.</p>
+        <p>Open YT Downloader directly from the installer window. macOS may ask you to confirm on first launch — click <strong>Open</strong>. If macOS blocks the app, go to <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>.</p>
+        <p style="margin-top:10px;">To open the app from Applications instead, run this once in Terminal:</p>
+        <div class="terminal-block" style="margin-top:6px;">
+          <span class="terminal-cmd" id="fix-cmd">xattr -cr /Applications/YTDownloader.app &amp;&amp; codesign --force --deep --sign - /Applications/YTDownloader.app</span>
+          <button class="copy-btn" onclick="copyFixCmd()">Copy</button>
+        </div>
       </div>
     </div>
   </div>
@@ -466,6 +471,12 @@ function switchTab(tab, btn) {
 }
 function copyCmd() {
   navigator.clipboard.writeText(document.getElementById('build-cmd').textContent);
+  const btn = event.target;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+function copyFixCmd() {
+  navigator.clipboard.writeText(document.getElementById('fix-cmd').textContent);
   const btn = event.target;
   btn.textContent = 'Copied!';
   setTimeout(() => btn.textContent = 'Copy', 2000);
