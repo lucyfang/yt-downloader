@@ -38,9 +38,7 @@ else
   echo "↓ Downloading yt-dlp..."
   curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos \
     -o "$TMP/bin/yt-dlp" \
-    || curl -fsSL https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_macos \
-    -o "$TMP/bin/yt-dlp" \
-    || { echo "✗ Failed to download yt-dlp from all sources. Check your internet connection."; exit 1; }
+    || { echo "✗ Failed to download yt-dlp. Check your internet connection."; exit 1; }
   echo "✓ yt-dlp downloaded"
 fi
 chmod +x "$TMP/bin/yt-dlp"
