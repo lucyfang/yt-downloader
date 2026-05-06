@@ -442,7 +442,30 @@ class Bridge: NSObject, WKScriptMessageHandler {
         do {
             try proc.run()
             sem.wait()
-            push(proc.terminationStatus == 0 ? "\n✅ Download complete.\n" : "\n❌ Download failed. The video may be unavailable or restricted.\n")
+            if proc.terminationStatus == 0 {
+                push("\n✅ Download complete.\n")
+            } else {
+                push("\n⚠️ Download failed. Retrying with fallback format…\n\n")
+                let fallbackOutput = folder + "/%(title)s.%(ext)s"
+                let fallbackArgs = ["--ffmpeg-location", ffmpeg, "-o", fallbackOutput, "-f", "best", url]
+                let proc2 = Process()
+                proc2.executableURL = URL(fileURLWithPath: ytdlp)
+                proc2.arguments = fallbackArgs
+                proc2.environment = env
+                let pipe2 = Pipe()
+                proc2.standardOutput = pipe2
+                proc2.standardError  = pipe2
+                let handle2 = pipe2.fileHandleForReading
+                let sem2 = DispatchSemaphore(value: 0)
+                handle2.readabilityHandler = { fh in
+                    let data = fh.availableData
+                    if data.isEmpty { fh.readabilityHandler = nil; sem2.signal() }
+                    else if let text = String(data: data, encoding: .utf8) { self.push(text) }
+                }
+                try proc2.run()
+                sem2.wait()
+                push(proc2.terminationStatus == 0 ? "\n✅ Download complete.\n" : "\n❌ Download failed. The video may be unavailable or restricted.\n")
+            }
         } catch {
             handle.readabilityHandler = nil
             push("❌ Failed to launch yt-dlp: \(error.localizedDescription)\n")
