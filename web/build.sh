@@ -37,7 +37,10 @@ if command -v yt-dlp &>/dev/null; then
 else
   echo "↓ Downloading yt-dlp..."
   curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos \
-    -o "$TMP/bin/yt-dlp" || { echo "✗ Failed to download yt-dlp."; exit 1; }
+    -o "$TMP/bin/yt-dlp" \
+    || curl -fsSL https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_macos \
+    -o "$TMP/bin/yt-dlp" \
+    || { echo "✗ Failed to download yt-dlp from all sources. Check your internet connection."; exit 1; }
   echo "✓ yt-dlp downloaded"
 fi
 chmod +x "$TMP/bin/yt-dlp"
@@ -117,6 +120,10 @@ EOF
 sudo cp "$TMP/Info.plist" /Applications/YTDownloader.app/Contents/Info.plist
 
 sudo xattr -cr /Applications/YTDownloader.app
+
+# Make yt-dlp user-owned so it can self-update on launch
+sudo chown -R "$USER" /Applications/YTDownloader.app/Contents/Resources/bin/
+
 echo "✓ Installed"
 echo ""
 echo "✅ Done! Opening YT Downloader..."

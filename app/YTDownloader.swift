@@ -122,6 +122,7 @@ body {
   border: none; border-radius: 10px;
   font-family: 'Milling', sans-serif; font-size: 15px; font-weight: 700;
   cursor: pointer; transition: background 0.12s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 }
 .btn-primary:hover:not(:disabled) { background: #333231; }
 .btn-primary:disabled { opacity: 0.5; cursor: default; }
@@ -185,6 +186,9 @@ body {
   <button id="dl-btn" class="btn-primary" onclick="download()">Download</button>
   <div id="log" class="log-card">Ready.
 </div>
+  <div style="text-align:right;margin-top:6px;">
+    <button id="update-btn" onclick="checkUpdates()" style="background:none;border:1px solid #D3D1CF;border-radius:6px;padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8F8984;cursor:pointer;letter-spacing:0.5px;transition:border-color 0.12s,color 0.12s;">↻ Check for yt-dlp updates</button>
+  </div>
 </div>
 
 <script>
@@ -265,6 +269,25 @@ function startPolling() {
   setTimeout(tick, 200);
 }
 
+function resetUpdateBtn() {
+  const btn = document.getElementById('update-btn');
+  btn.textContent = '↻ Check for yt-dlp updates';
+  btn.onclick = checkUpdates;
+  btn.style.color = '#8F8984';
+  btn.style.borderColor = '#D3D1CF';
+}
+function checkUpdates() {
+  const btn = document.getElementById('update-btn');
+  btn.textContent = '✕ Stop';
+  btn.onclick = stopUpdates;
+  btn.style.color = '#1D1C1B';
+  btn.style.borderColor = '#1D1C1B';
+  call('checkUpdates').then(resetUpdateBtn);
+}
+function stopUpdates() {
+  call('stopUpdate').then(resetUpdateBtn);
+}
+
 function download() {
   const url    = document.getElementById('url').value.trim();
   const folder = document.getElementById('folder').value.trim();
@@ -291,6 +314,7 @@ class Bridge: NSObject, WKScriptMessageHandler {
     private var logLines: [String] = []
     private var done = true
     private let lock = NSLock()
+    private var updateProc: Process?
 
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any],
@@ -335,6 +359,18 @@ class Bridge: NSObject, WKScriptMessageHandler {
             }
             let arr = escaped.map { "\"\($0)\"" }.joined(separator: ",")
             reply(id, raw: "{\"lines\":[\(arr)],\"done\":\(isDone)}")
+
+        case "checkUpdates":
+            lock.lock(); let busy = !done; lock.unlock()
+            if busy { reply(id, raw: "false"); return }
+            DispatchQueue.global(qos: .userInitiated).async {
+                self.autoUpdateYtDlp()
+                self.reply(id, raw: "true")
+            }
+
+        case "stopUpdate":
+            stopUpdateYtDlp()
+            reply(id, raw: "true")
 
         default: break
         }
@@ -405,8 +441,8 @@ class Bridge: NSObject, WKScriptMessageHandler {
 
         do {
             try proc.run()
-            sem.wait()  // blocks until pipe EOF, not until process exit — no deadlock
-            push(proc.terminationStatus == 0 ? "\n✅ Download complete.\n" : "\n❌ Error (exit \(proc.terminationStatus))\n")
+            sem.wait()
+            push(proc.terminationStatus == 0 ? "\n✅ Download complete.\n" : "\n❌ Download failed. The video may be unavailable or restricted.\n")
         } catch {
             handle.readabilityHandler = nil
             push("❌ Failed to launch yt-dlp: \(error.localizedDescription)\n")
@@ -417,6 +453,70 @@ class Bridge: NSObject, WKScriptMessageHandler {
 
     private func push(_ text: String) {
         lock.lock(); logLines.append(text); lock.unlock()
+    }
+
+    // MARK: - Auto-update yt-dlp
+
+    func autoUpdateYtDlp() {
+        let resources = Bundle.main.resourcePath ?? ""
+        let ytdlp = resources + "/bin/yt-dlp"
+
+        setLog("🔄 Checking for yt-dlp updates…\n")
+
+        let proc = Process()
+        updateProc = proc
+        proc.executableURL = URL(fileURLWithPath: ytdlp)
+        proc.arguments = ["-U"]
+        var env = ProcessInfo.processInfo.environment
+        env["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+        proc.environment = env
+
+        let pipe = Pipe()
+        proc.standardOutput = pipe
+        proc.standardError  = pipe
+
+        do {
+            try proc.run()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            proc.waitUntilExit()
+            updateProc = nil
+
+            if proc.terminationReason == .uncaughtSignal {
+                setLog("Ready.\n")
+                return
+            }
+
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            if output.lowercased().contains("up to date") || output.lowercased().contains("latest version") {
+                setLog("✓ yt-dlp is up to date.\n\nReady.\n")
+            } else if proc.terminationStatus == 0 && !output.isEmpty {
+                // Successfully updated — extract version if possible
+                let version = output.components(separatedBy: .newlines)
+                    .first(where: { $0.lowercased().contains("updated") || $0.lowercased().contains("yt-dlp") })
+                    ?? ""
+                setLog("✓ yt-dlp updated\(version.isEmpty ? "" : ": \(version.trimmingCharacters(in: .whitespaces))")\n\nReady.\n")
+            } else {
+                setLog("Ready.\n")
+            }
+        } catch {
+            updateProc = nil
+            setLog("Ready.\n")
+        }
+    }
+
+    func stopUpdateYtDlp() {
+        updateProc?.terminate()
+        updateProc = nil
+    }
+
+    private func setLog(_ text: String) {
+        let escaped = text
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+        let js = "document.getElementById('log').textContent = \"\(escaped)\";"
+        DispatchQueue.main.async { self.webView?.evaluateJavaScript(js, completionHandler: nil) }
     }
 
     func reply(_ id: String, string: String) {
@@ -447,6 +547,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem(); bar.addItem(appItem)
         let appMenu = NSMenu()
         appItem.submenu = appMenu
+        appMenu.addItem(NSMenuItem(title: "Check for yt-dlp Updates", action: #selector(checkForUpdates), keyEquivalent: ""))
+        appMenu.addItem(.separator())
         appMenu.addItem(NSMenuItem(title: "Quit YT Downloader", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         let editItem = NSMenuItem(); bar.addItem(editItem)
@@ -484,6 +586,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         webView.loadHTMLString(HTML, baseURL: Bundle.main.resourceURL)
+
+    }
+
+    @objc func checkForUpdates() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.bridge.autoUpdateYtDlp()
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
